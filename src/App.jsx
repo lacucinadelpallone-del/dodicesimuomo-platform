@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
-import { Moon, Sun, Monitor, Layers, Archive, BarChart2, TrendingUp, Search, Bookmark } from 'lucide-react';
+import { Moon, Sun, Monitor, Layers, Archive, BarChart2, TrendingUp, Search, Wrench } from 'lucide-react';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import AuthGate from './components/AuthGate';
@@ -8,6 +8,7 @@ import ScoutPage from './pages/ScoutPage';
 import ContentPage from './pages/ContentPage';
 import ArchivePage from './pages/ArchivePage';
 import QuoteLivePage from './pages/QuoteLivePage';
+import StrumentiPage from './pages/StrumentiPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import './App.css';
 
@@ -38,7 +39,7 @@ const mobileNavItems = [
   { path: '/quote',      short: 'Quote',    Icon: BarChart2 },
   { path: '/gestionale', short: 'Stats',    Icon: TrendingUp },
   { path: '/scout',      short: 'Scout',    Icon: Search },
-  { path: '/trend',      short: 'Trend',    Icon: Bookmark },
+  { path: '/strumenti',  short: 'Tools',    Icon: Wrench },
 ];
 
 function MobileTopbar() {
@@ -86,6 +87,7 @@ export default function App() {
                   <Route path="/scout"      element={<ScoutPage />} />
                   <Route path="/trend"      element={<Placeholder title="Memoria Trend" />} />
                   <Route path="/quote"      element={<QuoteLivePage />} />
+                  <Route path="/strumenti"  element={<StrumentiPage />} />
                   <Route path="/content"    element={<ContentPage />} />
                   <Route path="/archivio"   element={<ArchivePage />} />
                   <Route path="/gestionale" element={<AnalyticsPage />} />

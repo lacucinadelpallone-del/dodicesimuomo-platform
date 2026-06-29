@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Layers, Archive, BarChart2, TrendingUp, Search, Bookmark, Moon, Sun, Monitor, LogOut } from 'lucide-react';
+import { Layers, Archive, BarChart2, TrendingUp, Search, Bookmark, Wrench, Moon, Sun, Monitor, LogOut } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { isFirebaseConfigured } from '../services/firebase';
@@ -11,7 +11,7 @@ const nav = [
   { path: '/quote',      label: 'Quote Live',      short: 'Quote',    Icon: BarChart2 },
   { path: '/gestionale', label: 'Gestionale',      short: 'Stats',    Icon: TrendingUp },
   { path: '/scout',      label: 'Scout Partite',   short: 'Scout',    Icon: Search },
-  { path: '/trend',      label: 'Memoria Trend',   short: 'Trend',    Icon: Bookmark },
+  { path: '/strumenti',  label: 'Strumenti',       short: 'Tools',    Icon: Wrench },
 ];
 
 const ThemeIcons = { notte: Moon, giorno: Sun, auto: Monitor };
