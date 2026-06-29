@@ -3131,13 +3131,13 @@ body {
 
 @media (max-width: 768px) {
 
-  /* Previeni scroll orizzontale */
+  /* Previeni scroll orizzontale ovunque */
   html, body {
     overflow-x: hidden;
     max-width: 100vw;
   }
 
-  /* ── App layout: normale, niente overflow:hidden ── */
+  /* ── App layout: normale, niente overflow:hidden verticale ── */
   .app-layout {
     flex-direction: column;
     min-height: 100vh;
@@ -3145,6 +3145,12 @@ body {
     padding: 0;
     height: auto;
     width: 100%;
+  }
+
+  /* Proteggi tutte le pagine dall'overflow orizzontale */
+  .an-page, .cs-content, .archive-page, .quote-page, .scout-page, .placeholder-page {
+    overflow-x: hidden;
+    max-width: 100%;
   }
 
   /* ── Desktop sidebar: nascosta su mobile ── */
@@ -3289,8 +3295,9 @@ body {
 
   /* ── Gestionale / Analytics ── */
   .an-page { padding: 16px; }
-  .an-top-summary { flex-direction: column; gap: 8px; }
-  .an-summary-panel { min-width: unset; }
+  .an-top-summary { grid-template-columns: 1fr; gap: 8px; }
+  .an-summary-panel { min-width: unset; width: 100%; }
+  .an-stats-extra { grid-template-columns: repeat(2, 1fr); }
   .an-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 0; }
   .an-tab { padding: 8px 14px; font-size: 12px; white-space: nowrap; }
   .an-cards-row { flex-wrap: wrap; gap: 6px; }
