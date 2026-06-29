@@ -1,0 +1,22 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Proxy trasparente per chiamate API-Football (evita CORS fetch)
+[[redirects]]
+  from = "/sportsapi/*"
+  to = "https://v3.football.api-sports.io/:splat"
+  status = 200
+  force = true
+
+# Proxy trasparente per immagini API-Football (evita CORS su Canvas)
+[[redirects]]
+  from = "/imgproxy/*"
+  to = "https://media.api-sports.io/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
