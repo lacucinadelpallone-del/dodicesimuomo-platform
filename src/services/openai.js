@@ -69,22 +69,14 @@ Rules:
 5. Output ONLY the translated English text`;
 
 export async function translateBettingText(text) {
-  if (!KEY) throw new Error('OpenAI key non configurata');
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const res = await fetch('/api/translate', {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: TRANSLATION_PROMPT },
-        { role: 'user', content: text },
-      ],
-      temperature: 0.3,
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
   });
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.choices[0].message.content.trim();
+  if (!res.ok) throw new Error(data.error || 'Errore traduzione');
+  return data.result;
 }
 
 export async function extractFromImage(base64Image) {
