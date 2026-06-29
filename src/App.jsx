@@ -32,6 +32,15 @@ function Placeholder({ title }) {
   );
 }
 
+function MobileTopbar() {
+  return (
+    <div className="mobile-topbar">
+      <img src="/logos/du-logo.png" alt="DodicesimoUomo" className="mobile-topbar-logo"/>
+      <span className="mobile-topbar-name">Dodicesimo<b>Uomo</b></span>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -39,6 +48,7 @@ export default function App() {
         <AuthGate>
           <BrowserRouter>
             <div className="app-layout">
+              <MobileTopbar />
               <Sidebar />
               <ThemeFab />
               <main className="main-content">

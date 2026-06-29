@@ -82,6 +82,11 @@ body {
   flex-direction: column;
 }
 
+/* ── Mobile topbar (hidden on desktop) ─────────────── */
+.mobile-topbar {
+  display: none;
+}
+
 /* ── Sidebar ────────────────────────────────────────── */
 .sidebar {
   width: 216px;
@@ -3125,19 +3130,62 @@ body {
 
 @media (max-width: 768px) {
 
-  /* ── App layout ── */
+  /* ── App layout: colonna piena schermo, overflow gestito internamente ── */
   .app-layout {
     flex-direction: column;
-    /* spinge il contenuto sotto la status bar di iPhone */
+    height: 100vh;
+    overflow: hidden;
+    /* status bar iOS */
     padding-top: constant(safe-area-inset-top, 0px);
     padding-top: env(safe-area-inset-top, 0px);
   }
 
-  /* ── Sidebar → Bottom fixed nav ── */
+  /* ── Mobile topbar con logo ── */
+  .mobile-topbar {
+    display: flex;
+    order: 0;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 10px;
+    height: 52px;
+    padding: 0 16px;
+    background: var(--du-surface-2);
+    border-bottom: 1px solid var(--du-border);
+  }
+  .mobile-topbar-logo {
+    height: 34px;
+    width: 34px;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+  .mobile-topbar-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--du-white);
+    text-transform: uppercase;
+  }
+  .mobile-topbar-name b {
+    color: var(--du-accent);
+    font-weight: 700;
+  }
+
+  /* ── Main content: scrollabile al centro ── */
+  .main-content {
+    order: 1;
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+
+  /* ── Sidebar → bottom nav via flex order (più affidabile di position:fixed su iOS) ── */
   .sidebar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
+    order: 2;
+    position: static;
     width: 100%;
+    flex-shrink: 0;
     height: calc(58px + constant(safe-area-inset-bottom, 0px));
     height: calc(58px + env(safe-area-inset-bottom, 0px));
     min-height: unset;
@@ -3145,7 +3193,7 @@ body {
     border-top: 1px solid var(--du-border);
     flex-direction: row;
     align-items: stretch;
-    z-index: 300;
+    z-index: auto;
     padding: 0;
     padding-bottom: constant(safe-area-inset-bottom, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -3183,12 +3231,6 @@ body {
   .nav-item svg { width: 20px; height: 20px; }
   .nav-label { display: none; }
   .nav-label-short { display: block; font-size: 9px; font-weight: 600; letter-spacing: 0.01em; }
-
-  /* ── Main content ── */
-  .main-content {
-    padding-bottom: calc(62px + constant(safe-area-inset-bottom, 0px));
-    padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px));
-  }
 
   /* ── Content Studio ── */
   .content-studio { flex-direction: column; overflow: visible; flex: none; min-height: unset; }
