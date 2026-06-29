@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Moon, Sun, Monitor } from 'lucide-react';
+import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
+import { Moon, Sun, Monitor, Layers, Archive, BarChart2, TrendingUp, Search, Bookmark } from 'lucide-react';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import AuthGate from './components/AuthGate';
@@ -32,12 +32,40 @@ function Placeholder({ title }) {
   );
 }
 
+const mobileNavItems = [
+  { path: '/content',    short: 'Studio',   Icon: Layers },
+  { path: '/archivio',   short: 'Archivio', Icon: Archive },
+  { path: '/quote',      short: 'Quote',    Icon: BarChart2 },
+  { path: '/gestionale', short: 'Stats',    Icon: TrendingUp },
+  { path: '/scout',      short: 'Scout',    Icon: Search },
+  { path: '/trend',      short: 'Trend',    Icon: Bookmark },
+];
+
 function MobileTopbar() {
   return (
     <div className="mobile-topbar">
-      <img src="/logos/du-logo.png" alt="DodicesimoUomo" className="mobile-topbar-logo"/>
-      <span className="mobile-topbar-name">Dodicesimo<b>Uomo</b></span>
+      <div className="mobile-topbar-inner">
+        <img src="/logos/du-logo.png" alt="DodicesimoUomo" className="mobile-topbar-logo"/>
+        <span className="mobile-topbar-name">Dodicesimo<b>Uomo</b></span>
+      </div>
     </div>
+  );
+}
+
+function MobileBottomNav() {
+  return (
+    <nav className="mobile-bottom-nav">
+      {mobileNavItems.map(({ path, short, Icon }) => (
+        <NavLink
+          key={path}
+          to={path}
+          className={({ isActive }) => `mobile-nav-item${isActive ? ' active' : ''}`}
+        >
+          <Icon size={20} strokeWidth={1.5}/>
+          <span>{short}</span>
+        </NavLink>
+      ))}
+    </nav>
   );
 }
 
@@ -49,6 +77,7 @@ export default function App() {
           <BrowserRouter>
             <div className="app-layout">
               <MobileTopbar />
+              <MobileBottomNav />
               <Sidebar />
               <ThemeFab />
               <main className="main-content">

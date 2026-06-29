@@ -82,8 +82,9 @@ body {
   flex-direction: column;
 }
 
-/* ── Mobile topbar (hidden on desktop) ─────────────── */
-.mobile-topbar {
+/* ── Mobile topbar + bottom nav (hidden on desktop) ── */
+.mobile-topbar,
+.mobile-bottom-nav {
   display: none;
 }
 
@@ -3130,34 +3131,35 @@ body {
 
 @media (max-width: 768px) {
 
-  /* Blocca lo scroll del body — solo main-content scorre internamente */
-  html, body {
-    height: 100%;
-    overflow: hidden;
-    overscroll-behavior: none;
-  }
-
-  /* ── App layout: colonna piena schermo, overflow gestito internamente ── */
+  /* ── App layout: normale, niente overflow:hidden ── */
   .app-layout {
     flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-    /* status bar iOS */
-    padding-top: constant(safe-area-inset-top, 0px);
-    padding-top: env(safe-area-inset-top, 0px);
+    min-height: 100vh;
+    overflow: visible;
+    padding: 0;
+    height: auto;
   }
 
-  /* ── Mobile topbar con logo ── */
+  /* ── Desktop sidebar: nascosta su mobile ── */
+  .sidebar { display: none; }
+
+  /* ── Topbar: posizione fissa in alto ── */
   .mobile-topbar {
-    display: flex;
-    order: 0;
-    flex-shrink: 0;
-    align-items: center;
-    gap: 10px;
-    height: 52px;
-    padding: 0 16px;
+    display: block; /* attivata su mobile */
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 500;
+    padding-top: constant(safe-area-inset-top, 0px);
+    padding-top: env(safe-area-inset-top, 0px);
     background: var(--du-surface-2);
     border-bottom: 1px solid var(--du-border);
+  }
+  .mobile-topbar-inner {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
   }
   .mobile-topbar-logo {
     height: 34px;
@@ -3167,77 +3169,63 @@ body {
   }
   .mobile-topbar-name {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 19px;
+    font-size: 20px;
     font-weight: 600;
     letter-spacing: 0.04em;
     color: var(--du-white);
     text-transform: uppercase;
   }
-  .mobile-topbar-name b {
-    color: var(--du-accent);
-    font-weight: 700;
-  }
+  .mobile-topbar-name b { color: var(--du-accent); font-weight: 700; }
 
-  /* ── Main content: scrollabile al centro ── */
-  .main-content {
-    order: 1;
-    flex: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 8px;
-  }
-
-  /* ── Sidebar → bottom nav via flex order (più affidabile di position:fixed su iOS) ── */
-  .sidebar {
-    order: 2;
-    position: static;
-    width: 100%;
-    flex-shrink: 0;
+  /* ── Bottom nav: posizione fissa in basso ── */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 500;
     height: calc(58px + constant(safe-area-inset-bottom, 0px));
     height: calc(58px + env(safe-area-inset-bottom, 0px));
-    min-height: unset;
-    border-right: none;
+    background: var(--du-surface-2);
     border-top: 1px solid var(--du-border);
-    flex-direction: row;
-    align-items: stretch;
-    z-index: auto;
-    padding: 0;
     padding-bottom: constant(safe-area-inset-bottom, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  .sidebar-logo { display: none; }
-  .sidebar-nav {
-    flex-direction: row;
-    width: 100%;
-    padding: 0;
-    gap: 0;
     align-items: stretch;
-    justify-content: space-around;
-    flex: 1;
   }
-  .nav-item {
+  .mobile-nav-item {
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 3px;
-    padding: 6px 4px;
-    font-size: 9px;
-    border-left: none;
-    border-top: 2px solid transparent;
     flex: 1;
-    min-width: 48px;
-    white-space: nowrap;
+    min-width: 0;
+    padding: 6px 4px;
+    color: var(--du-text-muted);
+    text-decoration: none;
+    border-top: 2px solid transparent;
+    transition: color var(--du-t), background var(--du-t);
   }
-  .nav-item.active {
-    border-left: none;
+  .mobile-nav-item.active {
+    color: var(--du-accent);
     border-top-color: var(--du-accent);
     background: var(--du-accent-glow);
   }
-  .nav-item svg { width: 20px; height: 20px; }
-  .nav-label { display: none; }
-  .nav-label-short { display: block; font-size: 9px; font-weight: 600; letter-spacing: 0.01em; }
+  .mobile-nav-item span {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  /* ── Main content: padding per non finire sotto le barre ── */
+  .main-content {
+    padding-top: calc(52px + constant(safe-area-inset-top, 0px));
+    padding-top: calc(52px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(58px + constant(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+    height: auto;
+    overflow-y: visible;
+  }
 
   /* ── Content Studio ── */
   .content-studio { flex-direction: column; overflow: visible; flex: none; min-height: unset; }
