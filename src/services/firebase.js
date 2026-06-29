@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -22,6 +22,7 @@ if (isFirebaseConfigured()) {
   db             = getFirestore(app);
   googleProvider = new GoogleAuthProvider();
   googleProvider.setCustomParameters({ prompt: 'select_account' });
+  setPersistence(auth, browserLocalPersistence).catch(() => {});
 }
 
 export { auth, googleProvider, db };
