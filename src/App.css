@@ -3130,10 +3130,17 @@ body {
 
 @media (max-width: 768px) {
 
+  /* Blocca lo scroll del body — solo main-content scorre internamente */
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
   /* ── App layout: colonna piena schermo, overflow gestito internamente ── */
   .app-layout {
     flex-direction: column;
-    height: 100vh;
+    height: 100%;
     overflow: hidden;
     /* status bar iOS */
     padding-top: constant(safe-area-inset-top, 0px);
