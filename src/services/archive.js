@@ -1,60 +1,38 @@
-// IndexedDB — nessun limite di spazio come localStorage
-const DB_NAME    = 'dodicesimuomo_archive';
-const DB_VERSION = 1;
-const STORE      = 'graphics';
+import { db } from './firebase';
+import { auth } from './firebase';
+import {
+  collection, addDoc, getDocs, updateDoc, deleteDoc,
+  doc, query, orderBy, serverTimestamp,
+} from 'firebase/firestore';
 
-function openDB() {
-  return new Promise((res, rej) => {
-    const r = indexedDB.open(DB_NAME, DB_VERSION);
-    r.onerror = () => rej(r.error);
-    r.onsuccess = () => res(r.result);
-    r.onupgradeneeded = e => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains(STORE)) {
-        d.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
-      }
-    };
-  });
+function userCol(sub) {
+  const uid = auth?.currentUser?.uid;
+  if (!uid) throw new Error('Utente non autenticato');
+  return collection(db, 'users', uid, sub);
 }
 
 export async function archiveSave(entry) {
-  const db = await openDB();
-  return new Promise((res, rej) => {
-    const s = db.transaction(STORE, 'readwrite').objectStore(STORE);
-    const r = s.add({ ...entry, savedAt: Date.now() });
-    r.onsuccess = () => res(r.result); // restituisce l'id generato
-    r.onerror   = () => rej(r.error);
+  const ref = await addDoc(userCol('archivio'), {
+    ...entry,
+    savedAt: serverTimestamp(),
   });
+  return ref.id;
 }
 
 export async function archiveGetAll() {
-  const db = await openDB();
-  return new Promise((res, rej) => {
-    const r = db.transaction(STORE, 'readonly').objectStore(STORE).getAll();
-    r.onsuccess = () => res([...r.result].reverse()); // più recente prima
-    r.onerror   = () => rej(r.error);
-  });
+  const q = query(userCol('archivio'), orderBy('savedAt', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 export async function archiveUpdate(id, patch) {
-  const db = await openDB();
-  return new Promise((res, rej) => {
-    const s  = db.transaction(STORE, 'readwrite').objectStore(STORE);
-    const rg = s.get(id);
-    rg.onsuccess = () => {
-      const rp = s.put({ ...rg.result, ...patch });
-      rp.onsuccess = () => res();
-      rp.onerror   = () => rej(rp.error);
-    };
-    rg.onerror = () => rej(rg.error);
-  });
+  const uid = auth?.currentUser?.uid;
+  if (!uid) throw new Error('Utente non autenticato');
+  await updateDoc(doc(db, 'users', uid, 'archivio', id), patch);
 }
 
 export async function archiveDelete(id) {
-  const db = await openDB();
-  return new Promise((res, rej) => {
-    const r = db.transaction(STORE, 'readwrite').objectStore(STORE).delete(id);
-    r.onsuccess = () => res();
-    r.onerror   = () => rej(r.error);
-  });
+  const uid = auth?.currentUser?.uid;
+  if (!uid) throw new Error('Utente non autenticato');
+  await deleteDoc(doc(db, 'users', uid, 'archivio', id));
 }
