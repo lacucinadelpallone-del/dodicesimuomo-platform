@@ -1,18 +1,14 @@
 import { db } from './firebase';
-import { auth } from './firebase';
 import {
   collection, addDoc, getDocs, updateDoc, deleteDoc,
-  doc, query, orderBy, serverTimestamp,
+  doc, query, orderBy, serverTimestamp, onSnapshot,
 } from 'firebase/firestore';
 
-function userCol(sub) {
-  const uid = auth?.currentUser?.uid;
-  if (!uid) throw new Error('Utente non autenticato');
-  return collection(db, 'users', uid, sub);
-}
+// Collezione condivisa — tutti i collaboratori vedono gli stessi dati
+const COL = 'archivio';
 
 export async function archiveSave(entry) {
-  const ref = await addDoc(userCol('archivio'), {
+  const ref = await addDoc(collection(db, COL), {
     ...entry,
     savedAt: serverTimestamp(),
   });
@@ -20,19 +16,23 @@ export async function archiveSave(entry) {
 }
 
 export async function archiveGetAll() {
-  const q = query(userCol('archivio'), orderBy('savedAt', 'desc'));
+  const q = query(collection(db, COL), orderBy('savedAt', 'desc'));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
+// Listener real-time — aggiorna automaticamente quando qualcuno aggiunge qualcosa
+export function archiveListen(callback) {
+  const q = query(collection(db, COL), orderBy('savedAt', 'desc'));
+  return onSnapshot(q, snap => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
+}
+
 export async function archiveUpdate(id, patch) {
-  const uid = auth?.currentUser?.uid;
-  if (!uid) throw new Error('Utente non autenticato');
-  await updateDoc(doc(db, 'users', uid, 'archivio', id), patch);
+  await updateDoc(doc(db, COL, id), patch);
 }
 
 export async function archiveDelete(id) {
-  const uid = auth?.currentUser?.uid;
-  if (!uid) throw new Error('Utente non autenticato');
-  await deleteDoc(doc(db, 'users', uid, 'archivio', id));
+  await deleteDoc(doc(db, COL, id));
 }
