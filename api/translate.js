@@ -22,30 +22,29 @@ export default async function handler(req, res) {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: 'Testo mancante' });
 
-  const key = process.env.VITE_OPENAI_KEY || process.env.OPENAI_KEY;
+  const key = process.env.ANTHROPIC_KEY;
   if (!key) return res.status(500).json({ error: 'API key non configurata' });
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${key}`,
-        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: text },
-        ],
-        temperature: 0.3,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: text }],
       }),
     });
 
     const data = await response.json();
     if (data.error) return res.status(500).json({ error: data.error.message });
 
-    return res.status(200).json({ result: data.choices[0].message.content.trim() });
+    return res.status(200).json({ result: data.content[0].text.trim() });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
