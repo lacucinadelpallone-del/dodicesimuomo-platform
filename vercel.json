@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/scan-slip.js":        { "maxDuration": 30 },
+    "api/translate.js":        { "maxDuration": 30 },
+    "api/bankroll.js":         { "maxDuration": 30 },
+    "api/live-check.js":       { "maxDuration": 30 },
+    "api/telegram-webhook.js": { "maxDuration": 30 },
+    "api/fixtures.js":         { "maxDuration": 15 }
+  }
+}

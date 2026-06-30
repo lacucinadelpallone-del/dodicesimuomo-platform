@@ -5,8 +5,9 @@ import {
 } from 'firebase/firestore';
 
 // Collezioni condivise su Firestore — tutti i collaboratori vedono gli stessi dati
-const GIOCATE_COL     = 'giocate';
-const TRANSAZIONI_COL = 'transazioni';
+const GIOCATE_COL      = 'giocate';
+const TRANSAZIONI_COL  = 'transazioni';
+const MONITORING_COL   = 'live_monitoring';
 
 // ─── GIOCATE ─────────────────────────────────────────
 
@@ -215,4 +216,58 @@ export function calcFinanze(transazioni) {
     entrate: +entrate.toFixed(2), uscite: +uscite.toFixed(2),
     investimenti: +investimenti.toFixed(2), saldo: +saldo.toFixed(2),
   };
+}
+
+// ─── PRELIEVI (conto cointestato) ─────────────────────
+
+const PRELIEVI_COL = 'prelievi';
+
+export async function prelievAdd(entry) {
+  const ref = await addDoc(collection(db, PRELIEVI_COL), {
+    ...entry,
+    createdAt: serverTimestamp(),
+  });
+  return ref.id;
+}
+
+export async function prelievDelete(id) {
+  await deleteDoc(doc(db, PRELIEVI_COL, id));
+}
+
+export function prelieviListen(callback) {
+  const q = query(collection(db, PRELIEVI_COL), orderBy('createdAt', 'desc'));
+  return onSnapshot(q, snap => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
+}
+
+// ─── CALCOLI CONTI ────────────────────────────────────
+
+export function calcConti(giocate, prelievi) {
+  const conti = {};
+  giocate.filter(g => g.conto && g.bookmaker && g.risultato !== 'pending').forEach(g => {
+    const key = `${g.conto}__${g.bookmaker}`;
+    if (!conti[key]) conti[key] = { persona: g.conto, bookmaker: g.bookmaker, profit: 0, totali: 0, vinte: 0 };
+    const stake = parseFloat(g.stake) || 0;
+    const quota = parseFloat(g.quota) || 0;
+    conti[key].totali++;
+    if (g.risultato === 'won')       { conti[key].vinte++; conti[key].profit += stake * (quota - 1); }
+    else if (g.risultato === 'lost') { conti[key].profit -= stake; }
+  });
+  // Sottrai prelievi dal conto corrispondente
+  prelievi.forEach(p => {
+    const key = `${p.persona}__${p.bookmaker}`;
+    if (conti[key]) conti[key].profit -= parseFloat(p.importo) || 0;
+  });
+  return Object.values(conti).map(c => ({ ...c, profit: +c.profit.toFixed(2) }));
+}
+
+// ─── LIVE MONITORING ─────────────────────────────────
+
+export async function monitoringAdd(entry) {
+  const ref = await addDoc(collection(db, MONITORING_COL), {
+    ...entry,
+    createdAt: serverTimestamp(),
+  });
+  return ref.id;
 }
