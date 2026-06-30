@@ -1,105 +1,60 @@
-const DB_NAME = 'du_analytics';
-const DB_VER  = 1;
+import { db } from './firebase';
+import {
+  collection, addDoc, updateDoc, deleteDoc,
+  doc, query, orderBy, serverTimestamp, onSnapshot,
+} from 'firebase/firestore';
 
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VER);
-    req.onupgradeneeded = e => {
-      const db = e.target.result;
-      // Giocate: ogni tip registrata manualmente
-      if (!db.objectStoreNames.contains('giocate')) {
-        const s = db.createObjectStore('giocate', { keyPath: 'id', autoIncrement: true });
-        s.createIndex('data', 'data');
-        s.createIndex('risultato', 'risultato');
-      }
-      // Transazioni: entrate, uscite, investimenti del progetto
-      if (!db.objectStoreNames.contains('transazioni')) {
-        const s = db.createObjectStore('transazioni', { keyPath: 'id', autoIncrement: true });
-        s.createIndex('data', 'data');
-        s.createIndex('tipo', 'tipo');
-      }
-    };
-    req.onsuccess = e => resolve(e.target.result);
-    req.onerror   = e => reject(e.target.error);
-  });
-}
+// Collezioni condivise su Firestore — tutti i collaboratori vedono gli stessi dati
+const GIOCATE_COL     = 'giocate';
+const TRANSAZIONI_COL = 'transazioni';
 
 // ─── GIOCATE ─────────────────────────────────────────
 
 export async function giocataAdd(entry) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('giocate', 'readwrite');
-    const req = tx.objectStore('giocate').add({ ...entry, createdAt: new Date().toISOString() });
-    req.onsuccess = () => resolve(req.result);
-    req.onerror   = () => reject(req.error);
+  const ref = await addDoc(collection(db, GIOCATE_COL), {
+    ...entry,
+    createdAt: serverTimestamp(),
   });
+  return ref.id;
 }
 
 export async function giocataUpdate(id, patch) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const store = db.transaction('giocate', 'readwrite').objectStore('giocate');
-    const get = store.get(id);
-    get.onsuccess = () => {
-      const updated = { ...get.result, ...patch };
-      const put = store.put(updated);
-      put.onsuccess = () => resolve(updated);
-      put.onerror   = () => reject(put.error);
-    };
-    get.onerror = () => reject(get.error);
-  });
+  await updateDoc(doc(db, GIOCATE_COL, id), patch);
 }
 
 export async function giocataDelete(id) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const req = db.transaction('giocate', 'readwrite').objectStore('giocate').delete(id);
-    req.onsuccess = () => resolve();
-    req.onerror   = () => reject(req.error);
-  });
+  await deleteDoc(doc(db, GIOCATE_COL, id));
 }
 
-export async function giocateGetAll() {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const req = db.transaction('giocate', 'readonly').objectStore('giocate').getAll();
-    req.onsuccess = () => resolve([...req.result].reverse());
-    req.onerror   = () => reject(req.error);
+export function giocateListen(callback) {
+  const q = query(collection(db, GIOCATE_COL), orderBy('createdAt', 'desc'));
+  return onSnapshot(q, snap => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   });
 }
 
 // ─── TRANSAZIONI ─────────────────────────────────────
 
 export async function transazioneAdd(entry) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('transazioni', 'readwrite');
-    const req = tx.objectStore('transazioni').add({ ...entry, createdAt: new Date().toISOString() });
-    req.onsuccess = () => resolve(req.result);
-    req.onerror   = () => reject(req.error);
+  const ref = await addDoc(collection(db, TRANSAZIONI_COL), {
+    ...entry,
+    createdAt: serverTimestamp(),
   });
+  return ref.id;
 }
 
 export async function transazioneDelete(id) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const req = db.transaction('transazioni', 'readwrite').objectStore('transazioni').delete(id);
-    req.onsuccess = () => resolve();
-    req.onerror   = () => reject(req.error);
+  await deleteDoc(doc(db, TRANSAZIONI_COL, id));
+}
+
+export function transazioniListen(callback) {
+  const q = query(collection(db, TRANSAZIONI_COL), orderBy('createdAt', 'desc'));
+  return onSnapshot(q, snap => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   });
 }
 
-export async function transazioniGetAll() {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const req = db.transaction('transazioni', 'readonly').objectStore('transazioni').getAll();
-    req.onsuccess = () => resolve([...req.result].reverse());
-    req.onerror   = () => reject(req.error);
-  });
-}
-
-// ─── CALCOLI ─────────────────────────────────────────
+// ─── CALCOLI (invariati — funzioni pure sui dati) ─────
 
 export function calcAdvancedStats(giocate) {
   const sorted = [...giocate]
@@ -144,8 +99,7 @@ export function calcAdvancedStats(giocate) {
   });
 
   return {
-    maxWinStreak,
-    maxLossStreak,
+    maxWinStreak, maxLossStreak,
     maxDrawdown: +maxDrawdown.toFixed(2),
     avgStake: stakeCount > 0 ? +(totalStake / stakeCount).toFixed(2) : 0,
     maxStake: +maxStake.toFixed(2),
@@ -192,26 +146,21 @@ export function calcStats(giocate) {
     const quota = parseFloat(g.quota) || 0;
     if (g.risultato === 'won')  return s + stake * (quota - 1);
     if (g.risultato === 'lost') return s - stake;
-    return s; // void → 0
+    return s;
   }, 0);
 
   const roi = totalStaked > 0 ? (profit / totalStaked) * 100 : 0;
   const strikeRate = (vinte.length + perse.length) > 0
-    ? (vinte.length / (vinte.length + perse.length)) * 100
-    : 0;
+    ? (vinte.length / (vinte.length + perse.length)) * 100 : 0;
 
-  // Stake delle giocate ancora aperte = soldi già usciti dal pocket ma non ancora regolati
   const pendingStaked = giocate
     .filter(g => g.risultato === 'pending')
     .reduce((s, g) => s + (parseFloat(g.stake) || 0), 0);
 
   return {
-    totali: giocate.length,
-    chiuse: chiuse.length,
-    vinte: vinte.length,
-    perse: perse.length,
-    void: void_.length,
-    pending: giocate.filter(g => g.risultato === 'pending').length,
+    totali: giocate.length, chiuse: chiuse.length,
+    vinte: vinte.length, perse: perse.length,
+    void: void_.length, pending: giocate.filter(g => g.risultato === 'pending').length,
     profit: +profit.toFixed(2),
     pendingStaked: +pendingStaked.toFixed(2),
     roi: +roi.toFixed(1),
@@ -246,13 +195,11 @@ export function calcByBookmaker(giocate) {
     const quota = parseFloat(g.quota) || 0;
     map[bk].totali++;
     if (g.risultato !== 'void') map[bk].staked += stake;
-    if (g.risultato === 'won')  { map[bk].vinte++; map[bk].profit += stake * (quota - 1); }
+    if (g.risultato === 'won')       { map[bk].vinte++; map[bk].profit += stake * (quota - 1); }
     else if (g.risultato === 'lost') { map[bk].profit -= stake; }
   });
   return Object.entries(map).map(([name, s]) => ({
-    name,
-    totali: s.totali,
-    vinte: s.vinte,
+    name, totali: s.totali, vinte: s.vinte,
     profit: +s.profit.toFixed(2),
     roi: s.staked > 0 ? +((s.profit / s.staked) * 100).toFixed(1) : 0,
     sr: s.totali > 0 ? +((s.vinte / s.totali) * 100).toFixed(1) : 0,
@@ -260,14 +207,12 @@ export function calcByBookmaker(giocate) {
 }
 
 export function calcFinanze(transazioni) {
-  const entrate     = transazioni.filter(t => t.tipo === 'entrata').reduce((s, t) => s + (parseFloat(t.importo) || 0), 0);
-  const uscite      = transazioni.filter(t => t.tipo === 'uscita').reduce((s, t) => s + (parseFloat(t.importo) || 0), 0);
+  const entrate      = transazioni.filter(t => t.tipo === 'entrata').reduce((s, t) => s + (parseFloat(t.importo) || 0), 0);
+  const uscite       = transazioni.filter(t => t.tipo === 'uscita').reduce((s, t) => s + (parseFloat(t.importo) || 0), 0);
   const investimenti = transazioni.filter(t => t.tipo === 'investimento').reduce((s, t) => s + (parseFloat(t.importo) || 0), 0);
   const saldo = entrate - uscite - investimenti;
   return {
-    entrate: +entrate.toFixed(2),
-    uscite: +uscite.toFixed(2),
-    investimenti: +investimenti.toFixed(2),
-    saldo: +saldo.toFixed(2),
+    entrate: +entrate.toFixed(2), uscite: +uscite.toFixed(2),
+    investimenti: +investimenti.toFixed(2), saldo: +saldo.toFixed(2),
   };
 }

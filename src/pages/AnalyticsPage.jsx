@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Target, Briefcase, TrendingUp, BarChart2, Download, X, Minus, Pencil } from 'lucide-react';
 import {
-  giocataAdd, giocataUpdate, giocataDelete, giocateGetAll,
-  transazioneAdd, transazioneDelete, transazioniGetAll,
+  giocataAdd, giocataUpdate, giocataDelete, giocateListen,
+  transazioneAdd, transazioneDelete, transazioniListen,
   calcStats, calcFinanze, calcAdvancedStats,
   calcDailyCumulative, calcDailyCassa, calcByBookmaker,
 } from '../services/analyticsdb';
@@ -397,25 +397,23 @@ export default function AnalyticsPage() {
   const [capInput, setCapInput]     = useState('');
   const [showCapForm, setShowCapForm] = useState(false);
 
-  async function reload() {
-    setLoading(true);
-    const [g, t] = await Promise.all([giocateGetAll(), transazioniGetAll()]);
-    setGiocate(g);
-    setTransazioni(t);
-    setLoading(false);
-  }
-  useEffect(() => { reload(); }, []);
+  useEffect(() => {
+    // Listener in tempo reale — tutti i collaboratori vedono i dati aggiornati
+    const unsubG = giocateListen(data => { setGiocate(data); setLoading(false); });
+    const unsubT = transazioniListen(data => { setTransazioni(data); });
+    return () => { unsubG(); unsubT(); };
+  }, []);
 
-  async function handleAddGiocata(e)          { await giocataAdd(e); await reload(); }
-  async function handleUpdateRisultato(id, r) { await giocataUpdate(id, { risultato: r }); await reload(); }
+  async function handleAddGiocata(e)          { await giocataAdd(e); }
+  async function handleUpdateRisultato(id, r) { await giocataUpdate(id, { risultato: r }); }
   async function handleDeleteGiocata(id) {
     if (!confirm('Eliminare questa giocata?')) return;
-    await giocataDelete(id); await reload();
+    await giocataDelete(id);
   }
-  async function handleAddTransazione(e) { await transazioneAdd(e); await reload(); }
+  async function handleAddTransazione(e) { await transazioneAdd(e); }
   async function handleDeleteTransazione(id) {
     if (!confirm('Eliminare questa voce?')) return;
-    await transazioneDelete(id); await reload();
+    await transazioneDelete(id);
   }
   function saveCapIniziale() {
     const v = parseFloat(capInput);

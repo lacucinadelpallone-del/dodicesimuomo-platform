@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FolderOpen, X, Download, Trash2, Clock } from 'lucide-react';
-import { archiveGetAll, archiveDelete } from '../services/archive';
+import { archiveListen, archiveDelete } from '../services/archive';
 
 const SEZIONI = ['Tutte', 'Singola', 'Multipla', 'Listone', 'Chicca', 'Antepost'];
 
@@ -16,7 +16,11 @@ export default function ArchivePage() {
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
-    archiveGetAll().then(data => { setItems(data); setLoading(false); });
+    const unsub = archiveListen(data => {
+      setItems(data);
+      setLoading(false);
+    });
+    return unsub;
   }, []);
 
   async function handleDelete(id) {
